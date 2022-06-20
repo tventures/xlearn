@@ -1,9 +1,13 @@
 # Set output library.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/test/score)
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH 1)
+endif()
+
 
 # Build static library
 set(STA_DEPS data base)
-add_library(score STATIC score_function.cc 
+add_library(score SHARED score_function.cc
 linear_score.cc fm_score.cc ffm_score.cc)
 target_link_libraries(score ${STA_DEPS})
 

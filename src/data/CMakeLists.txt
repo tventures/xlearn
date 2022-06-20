@@ -1,9 +1,13 @@
 # Set output library.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/test/data)
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH 1)
+endif()
+
 
 # Build static library
 set(STA_DEPS base)
-add_library(data STATIC model_parameters.cc)
+add_library(data SHARED model_parameters.cc)
 target_link_libraries(data ${STA_DEPS})
 
 # Build unittests.

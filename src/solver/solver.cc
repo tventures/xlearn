@@ -73,7 +73,8 @@ Reader* Solver::create_reader() {
   std::string str = hyper_param_.from_file ? hyper_param_.on_disk ? "disk" : "memory" : "dmatrix";
   reader = CREATE_READER(str.c_str());
   if (reader == nullptr) {
-    LOG(FATAL) << "Cannot create reader: " << str;
+      Color::print_error(StringPrintf("Cannot create reader: ",str.c_str()));
+      abort();
   }
   return reader;
 }
@@ -83,8 +84,8 @@ Score* Solver::create_score() {
   Score* score;
   score = CREATE_SCORE(hyper_param_.score_func.c_str());
   if (score == nullptr) {
-    LOG(FATAL) << "Cannot create score: "
-               << hyper_param_.score_func;
+      Color::print_error(StringPrintf("Cannot create score:  ",hyper_param_.score_func.c_str()));
+      abort();
   }
   return score;
 }
@@ -94,8 +95,8 @@ Loss* Solver::create_loss() {
   Loss* loss;
   loss = CREATE_LOSS(hyper_param_.loss_func.c_str());
   if (loss == nullptr) {
-    LOG(FATAL) << "Cannot create loss: "
-               << hyper_param_.loss_func;
+      Color::print_error(StringPrintf("Cannot create loss: ",hyper_param_.loss_func.c_str()));
+      abort();
   }
   return loss;
 }
@@ -120,8 +121,6 @@ void Solver::Initialize(int argc, char* argv[]) {
   print_logo();
   // Check and parse command line arguments
   checker(argc, argv);
-  // Initialize log file
-  init_log();
   // Init train or predict
   if (hyper_param_.is_train) {
     init_train();
@@ -139,13 +138,21 @@ void Solver::Initialize(HyperParam& hyper_param) {
   // Check the arguments
   checker(hyper_param);
   this->hyper_param_ = hyper_param;
-  // Initialize log file
-  init_log();
   // Init train or predict
   if (hyper_param_.is_train) {
     init_train();
   } else {
     init_predict();
+  }
+}
+
+void Solver::InitializeDataset(xLearn::DMatrix * matrix) {
+  reader_[0]->SetBlockSize(hyper_param_.block_size);
+  reader_[0]->Initialize(matrix);
+  reader_[0]->SetShuffle(false);
+  if (reader_[0] == nullptr) {
+    Color::print_info(StringPrintf("Cannot load dataset"));
+    exit(0);
   }
 }
 
@@ -204,16 +211,12 @@ void Solver::init_train() {
   Timer timer;
   timer.tic();
   Color::print_action("Read Problem ...");
-  LOG(INFO) << "Start to init Reader";
   // Split file
   if (hyper_param_.from_file) {
     if (hyper_param_.cross_validation) {
       CHECK_GT(hyper_param_.num_folds, 0);
       splitor_.split(hyper_param_.train_set_file,
                     hyper_param_.num_folds);
-      LOG(INFO) << "Split file into "
-                << hyper_param_.num_folds
-                << " parts.";
     }
   }
   // Get the Reader list
@@ -236,7 +239,6 @@ void Solver::init_train() {
         file_list.push_back(hyper_param_.validate_set_file);
       }
     }
-    LOG(INFO) << "Number of Reader: " << num_reader;
     reader_.resize(num_reader, nullptr);
     // Create Reader
     for (int i = 0; i < num_reader; ++i) {
@@ -257,8 +259,7 @@ void Solver::init_train() {
         );
         exit(0);
       }
-      LOG(INFO) << "Init Reader: " << file_list[i];
-    } 
+    }
   } else {
     num_reader += 1;  // training dataset
     std::vector<xLearn::DMatrix*> data_list;
@@ -269,7 +270,6 @@ void Solver::init_train() {
       data_list.push_back(hyper_param_.valid_dataset);
     }
     // Create Reader
-    LOG(INFO) << "Number of Reader: " << num_reader;
     reader_.resize(num_reader, nullptr);
     for (int i = 0; i < num_reader; ++i) {
       reader_[i] = create_reader();
@@ -310,23 +310,21 @@ void Solver::init_train() {
   // INT_MAX +  = 0
   if (hyper_param_.num_feature == 0) {
     Color::print_error("Feature index is too large (overflow).");
-    LOG(FATAL) << "Feature index is too large (overflow).";
+    abort();
   }
-  LOG(INFO) << "Number of feature: " << hyper_param_.num_feature;
   Color::print_info(
     StringPrintf("Number of Feature: %d", 
                  hyper_param_.num_feature)
   );
   if (hyper_param_.score_func.compare("ffm") == 0) {
     hyper_param_.num_field = max_field + 1;
-    LOG(INFO) << "Number of field: " << hyper_param_.num_field;
     Color::print_info(
       StringPrintf("Number of Field: %d", 
         hyper_param_.num_field)
     );
   }
   Color::print_info(
-    StringPrintf("Time cost for reading problem: %.2f (sec)",
+    StringPrintf("Time cost for reading problem: %.3f (sec)",
          timer.toc())
   );
   /*********************************************************
@@ -357,13 +355,12 @@ void Solver::init_train() {
   }
   index_t num_param = model_->GetNumParameter();
   hyper_param_.num_param = num_param;
-  LOG(INFO) << "Number parameters: " << num_param;
   Color::print_info(
     StringPrintf("Model size: %s", 
          PrintSize(num_param*sizeof(real_t)).c_str())
   );
   Color::print_info(
-    StringPrintf("Time cost for model initial: %.2f (sec)",
+    StringPrintf("Time cost for model initial: %.3f (sec)",
          timer.toc())
   );
   /*********************************************************
@@ -377,7 +374,6 @@ void Solver::init_train() {
                      hyper_param_.lambda_1,
                      hyper_param_.lambda_2,
                      hyper_param_.opt_type);
-  LOG(INFO) << "Initialize score function.";
   /*********************************************************
    *  Initialize loss function                             *
    *********************************************************/
@@ -385,7 +381,6 @@ void Solver::init_train() {
   loss_->Initialize(score_, pool_, 
          hyper_param_.norm, 
          hyper_param_.lock_free);
-  LOG(INFO) << "Initialize loss function.";
   /*********************************************************
    *  Init metric                                          *
    *********************************************************/
@@ -393,7 +388,6 @@ void Solver::init_train() {
   if (metric_ != nullptr) {
     metric_->Initialize(pool_);
   }
-  LOG(INFO) << "Initialize evaluation metric.";
 }
 
 // Initialize predict task
@@ -458,10 +452,9 @@ void Solver::init_predict() {
     }
   }
   Color::print_info(
-    StringPrintf("Time cost for loading model: %.2f (sec)",
+    StringPrintf("Time cost for loading model: %.3f (sec)",
         timer.toc())
   );
-  LOG(INFO) << "Initialize model.";
   /*********************************************************
    *  Initialize Reader and read problem                   *
    *********************************************************/
@@ -496,21 +489,18 @@ void Solver::init_predict() {
     }
   }
   Color::print_info(
-    StringPrintf("Time cost for reading problem: %.2f (sec)",
+    StringPrintf("Time cost for reading problem: %.3f (sec)",
                   timer.toc())
   );
-  LOG(INFO) << "Initialize Reader: " << hyper_param_.test_set_file;
   /*********************************************************
    *  Init score function                                  *
    *********************************************************/
   score_ = create_score();
-  LOG(INFO) << "Initialize score function.";
   /*********************************************************
    *  Init loss function                                   *
    *********************************************************/
   loss_ = create_loss();
   loss_->Initialize(score_, pool_, hyper_param_.norm);
-  LOG(INFO) << "Initialize score function.";
 }
 
 /******************************************************************************
@@ -520,10 +510,8 @@ void Solver::init_predict() {
 // Start training or inference
 void Solver::StartWork() {
   if (hyper_param_.is_train) {
-    LOG(INFO) << "Start training work.";
     start_train_work();
   } else {
-    LOG(INFO) << "Start inference work.";
     start_prediction_work();
   }
 }
@@ -579,7 +567,7 @@ void Solver::start_train_work() {
         StringPrintf("Model file: %s", hyper_param_.model_file.c_str())
       );
       Color::print_info(
-        StringPrintf("Time cost for saving model: %.2f (sec)", timer.toc())
+        StringPrintf("Time cost for saving model: %.3f (sec)", timer.toc())
       );
     }
     // Save TXT model 
@@ -592,7 +580,7 @@ void Solver::start_train_work() {
         StringPrintf("TXT Model file: %s", hyper_param_.txt_model_file.c_str())
       );
       Color::print_info(
-        StringPrintf("Time cost for saving txt model: %.2f (sec)", timer.toc())
+        StringPrintf("Time cost for saving txt model: %.3f (sec)", timer.toc())
       );
     }
     Color::print_action("Finish training");
@@ -621,7 +609,6 @@ void Solver::start_prediction_work() {
 
 // Finalize xLearn
 void Solver::Clear() {
-  LOG(INFO) << "Clear the xLearn environment ...";
   Color::print_action("Clear the xLearn environment ...");
   // Clear model
   delete this->model_;
