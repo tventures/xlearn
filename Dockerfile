@@ -1,10 +1,9 @@
 FROM amazoncorretto:17
-
-RUN yum install -y gcc binutils clang make cmake maven
-
 ARG GIHUB_USERNAME
 ARG GITHUB_TOKEN
 ARG CIRCLE_TAG
+
+RUN yum install -y gcc binutils clang make cmake maven
 
 ADD . .
 
@@ -28,9 +27,10 @@ RUN mvn deploy:deploy-file \
     -DrepositoryId=github \
     -DgroupId=com.inventale.coregistration \
     -DartifactId=xlearn-native-libs \
-    -Dversion=1.0.22 \
+    -Dversion=1.0.21 \
     -Durl=https://maven.pkg.github.com/tventures/xlearn/ \
     -Dregistry=https://maven.pkg.github.com/tventures \
     -Dgithub.username=$GIHUB_USERNAME \
     -Dgithub.token=$GITHUB_TOKEN \
+    -Dmaven.source.useDefaultManifestFile=true \
     -s settings.xml
