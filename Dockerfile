@@ -33,4 +33,5 @@ RUN mvn deploy:deploy-file \
     -Dgithub.username=$GIHUB_USERNAME \
     -Dgithub.token=$GITHUB_TOKEN \
     -Dmaven.source.useDefaultManifestFile=true \
-    -s settings.xml
+    -s settings.xml \
+    -e
