@@ -28,7 +28,7 @@ RUN mvn deploy:deploy-file \
     -DrepositoryId=github \
     -DgroupId=com.inventale.coregistration \
     -DartifactId=xlearn-native-libs \
-    -Dversion=$CIRCLE_TAG \
+    -Dversion=1.0.22 \
     -Durl=https://maven.pkg.github.com/tventures/xlearn/ \
     -Dregistry=https://maven.pkg.github.com/tventures \
     -Dgithub.username=$GIHUB_USERNAME \
