@@ -29,7 +29,7 @@ RUN mvn deploy:deploy-file \
     -Dversion=1.0.22 \
     -Durl=https://maven.pkg.github.com/tventures/xlearn/ \
     -Dregistry=https://maven.pkg.github.com/tventures \
-    -Dgithub.username=$GIHUB_USERNAME \
+    -Dgithub.username=$GITHUB_USERNAME \
     -Dgithub.token=$GITHUB_TOKEN \
     -Dmaven.source.useDefaultManifestFile=true \
     -s settings.xml
