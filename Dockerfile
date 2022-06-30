@@ -1,5 +1,5 @@
 FROM amazoncorretto:17
-ARG GIHUB_USERNAME
+ARG GITHUB_USERNAME
 ARG GITHUB_TOKEN
 
 RUN yum install -y gcc binutils clang make cmake maven

@@ -13,4 +13,4 @@ blocks:
         - name: build and publish
           commands:
             - checkout
-            - docker build -t publish --build-arg GIHUB_USERNAME=${GIHUB_USERNAME} --build-arg GITHUB_TOKEN=${GITHUB_TOKEN} .
+            - docker build -t publish --build-arg GITHUB_USERNAME=${GITHUB_USERNAME} --build-arg GITHUB_TOKEN=${GITHUB_TOKEN} .
