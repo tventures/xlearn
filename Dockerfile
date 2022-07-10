@@ -20,14 +20,14 @@ RUN mkdir native-libs && \
     cp build/src/solver/libsolver.so native-libs/ && \
     cp build/src/loss/libloss.so native-libs/
 
-RUN jar cf xlearn-native-libs.jar native-libs
+RUN jar cd native-libs && cf xlearn-native-libs.jar .
 
 RUN mvn deploy:deploy-file \
     -Dfile=xlearn-native-libs.jar \
     -DrepositoryId=github \
     -DgroupId=com.inventale.coregistration \
     -DartifactId=xlearn-native-libs \
-    -Dversion=1.0.21 \
+    -Dversion=1.0.23 \
     -Durl=https://maven.pkg.github.com/tventures/xlearn/ \
     -Dregistry=https://maven.pkg.github.com/tventures \
     -Dgithub.username=$GIHUB_USERNAME \
